@@ -1,65 +1,80 @@
-import Image from "next/image";
+"use client"
+import Rates from "./components/exchange-rates";
+import Converter from "./components/converter";
+import Graphic from "./components/graphic";
+import Modal from "./components/modal";
+
+import { useEffect, useState } from "react";
+import { getCurrencies } from "./utils/utils";
 
 export default function Home() {
+  // For setting base currency
+  const [baseCurrency, setBaseCurrency] = useState<string>("USD");
+  // For setting target currency
+  const [destCurrency, setDestCurrency] = useState<string>("EUR");
+  // All currencies
+  const [currencies, setCurrencies] = useState<[string, string][]>([]);
+  // For open and close currency selection modals
+  const [isBaseModalOpen, setIsBaseModalOpen] = useState<boolean>(false);
+  const [isDestModalOpen, setIsDestModalOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    async function loadCurrencies()
+    {
+      const currencies_response = await getCurrencies();
+      setCurrencies(currencies_response);
+    }
+  
+    loadCurrencies();
+  }, []);
+
+  const handleSelectBase = (selected: string)  => {
+    setBaseCurrency(selected); // Get base currency from modal
+  };
+
+  const handleSelectDest = (selected: string)  => {
+    setDestCurrency(selected); // Get dest currency from modal
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="overflow-scroll bg-[#081018] relative flex min-h-screen items-center justify-center">
+      {/* Title */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 font-semibold flex items-center justify-center text-center w-1/2 h-1/8 z-1">
+        <h1 className="text-5xl text">XChange</h1>
+      </div>
+  
+      <Converter baseCurrency={baseCurrency} destCurrency={destCurrency} onSelectBase={() => setIsBaseModalOpen(true)} 
+      onSelectDest={() => setIsDestModalOpen(true)}></Converter>
+
+
+      {/* Graphic */}
+      <Graphic baseCurrency={baseCurrency} toCurrency={destCurrency}></Graphic>
+
+      {/* Rates changes */}
+      <Rates baseCurrency={baseCurrency} currencies={currencies}></Rates>
+
+      {/* Modals */}
+      {(isBaseModalOpen || isDestModalOpen) && (
+        <div
+          className="fixed inset-0 z-10 bg-black/30 backdrop-blur-md"
+          onClick={() => {
+            setIsBaseModalOpen(false);
+            setIsDestModalOpen(false);
+          }}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      )}
+
+      {isBaseModalOpen && (
+        <Modal currencies={currencies} destCurrency={destCurrency} onSelectCurrency={handleSelectBase} closeModal={() => setIsBaseModalOpen(false)}></Modal>
+      )}
+
+      {isDestModalOpen && (
+        <Modal currencies={currencies} destCurrency={baseCurrency} onSelectCurrency={handleSelectDest} closeModal={() => setIsDestModalOpen(false)}></Modal>
+      )}
+
+      <footer className="absolute text h-1/10 w-1/1 top-5/4 z-3"></footer>
     </div>
+    
+    
   );
 }
